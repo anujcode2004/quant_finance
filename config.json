@@ -1,0 +1,67 @@
+{
+	"data_providers": {
+		"active_provider": "yfinance",
+		"providers": {
+			"yfinance": {
+				"enabled": true,
+				"timeout": 10,
+				"retry_count": 3
+			},
+			"alpha_vantage": {
+				"enabled": false,
+				"api_key": "",
+				"timeout": 10
+			},
+			"polygon": {
+				"enabled": false,
+				"api_key": "",
+				"timeout": 10
+			}
+		}
+	},
+	"news": {
+		"provider": "newsapi",
+		"newsapi": {
+			"api_key": "",
+			"enabled": false
+		},
+		"alpha_vantage_news": {
+			"api_key": "",
+			"enabled": false
+		}
+	},
+	"embedding": {
+		"model": "sentence-transformers/all-MiniLM-L6-v2",
+		"device": "cpu",
+		"batch_size": 32
+	},
+	"logging": {
+		"log_level": "INFO",
+		"log_file": "logs/quant_finance.log",
+		"log_file_max_size": 10485760,
+		"log_file_num_backups": 5,
+		"log_console": true,
+		"use_rich_logger": true,
+		"rich_theme": "monokai"
+	},
+	"telemetry": {
+		"enabled": true,
+		"metrics_enabled": true,
+		"performance_tracking": true
+	},
+	"indicators": {
+		"default_periods": {
+			"sma_short": 9,
+			"sma_long": 21,
+			"ema_short": 12,
+			"ema_long": 26,
+			"rsi_period": 14,
+			"macd_fast": 12,
+			"macd_slow": 26,
+			"macd_signal": 9,
+			"bb_period": 20,
+			"bb_std": 2
+		}
+	}
+}
+
