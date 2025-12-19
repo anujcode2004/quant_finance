@@ -7,8 +7,11 @@ Run with: streamlit run strategies/moving_average_strategy.py
 import sys
 from pathlib import Path
 
-# Add parent directory to path
-sys.path.insert(0, str(Path(__file__).parent.parent))
+# Ensure project root (containing `assets`, `indicators`, etc.) is on sys.path,
+# even when this script is run from inside the `strategies/` directory via Streamlit.
+ROOT_DIR = Path(__file__).resolve().parent.parent
+if str(ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIR))
 
 import streamlit as st
 import pandas as pd
@@ -35,7 +38,22 @@ st.markdown("Analyze stocks using 9 and 21 period Simple Moving Averages")
 st.sidebar.header("Strategy Parameters")
 
 symbol = st.sidebar.text_input("Stock Symbol", value="AAPL").upper()
-period = st.sidebar.selectbox("Data Period", ["1mo", "3mo", "6mo", "1y", "2y", "5y"], index=3)
+
+period = st.sidebar.selectbox(
+    "Lookback Period",
+    ["1d", "5d", "1mo", "3mo", "6mo", "1y", "2y", "5y"],
+    index=5,
+)
+
+interval = st.sidebar.selectbox(
+    "Data Interval",
+    ["1m", "5m", "15m", "30m", "1h", "1d"],
+    index=5,
+)
+
+real_time = st.sidebar.checkbox("Enable real-time refresh", value=True)
+refresh_seconds = st.sidebar.slider("Refresh interval (seconds)", 1, 30, 1)
+
 sma_short = st.sidebar.number_input("Short SMA Period", min_value=1, max_value=50, value=9)
 sma_long = st.sidebar.number_input("Long SMA Period", min_value=1, max_value=200, value=21)
 
@@ -44,6 +62,10 @@ config_periods = StaticMemoryCache.get_indicators_config()
 if st.sidebar.button("Use Default Periods"):
     sma_short = config_periods.get("sma_short", 9)
     sma_long = config_periods.get("sma_long", 21)
+
+# Optional real-time refresh (Streamlit 1.26+)
+if real_time and hasattr(st, "autorefresh"):
+    st.autorefresh(interval=refresh_seconds * 1000, key="ma_strategy_autorefresh")
 
 if st.sidebar.button("Analyze"):
     try:
@@ -55,10 +77,10 @@ if st.sidebar.button("Analyze"):
         if not stock.validate():
             st.error(f"Invalid symbol: {symbol}")
             st.stop()
-        
+
         # Get historical data
         with st.spinner(f"Fetching data for {symbol}..."):
-            df = stock.get_historical_data(period=period)
+            df = stock.get_historical_data(period=period, interval=interval)
         
         if df.empty:
             st.error("No data available for this symbol")

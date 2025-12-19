@@ -7,8 +7,11 @@ Run with: streamlit run strategies/multi_stock_analysis.py
 import sys
 from pathlib import Path
 
-# Add parent directory to path
-sys.path.insert(0, str(Path(__file__).parent.parent))
+# Ensure project root (containing `assets`, `indicators`, etc.) is on sys.path,
+# even when this script is run from inside the `strategies/` directory via Streamlit.
+ROOT_DIR = Path(__file__).resolve().parent.parent
+if str(ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIR))
 
 import streamlit as st
 import pandas as pd
@@ -35,7 +38,25 @@ st.sidebar.header("Stock Selection")
 
 symbol1 = st.sidebar.text_input("Stock 1 Symbol", value="AAPL").upper()
 symbol2 = st.sidebar.text_input("Stock 2 Symbol", value="MSFT").upper()
-period = st.sidebar.selectbox("Data Period", ["1mo", "3mo", "6mo", "1y", "2y"], index=2)
+
+period = st.sidebar.selectbox(
+    "Lookback Period",
+    ["1d", "5d", "1mo", "3mo", "6mo", "1y", "2y", "5y"],
+    index=4,
+)
+
+interval = st.sidebar.selectbox(
+    "Data Interval",
+    ["1m", "5m", "15m", "30m", "1h", "1d"],
+    index=5,
+)
+
+real_time = st.sidebar.checkbox("Enable real-time refresh", value=True)
+refresh_seconds = st.sidebar.slider("Refresh interval (seconds)", 1, 30, 1)
+
+# Optional real-time refresh (Streamlit 1.26+)
+if real_time and hasattr(st, "autorefresh"):
+    st.autorefresh(interval=refresh_seconds * 1000, key="multi_stock_autorefresh")
 
 if st.sidebar.button("Analyze"):
     try:
@@ -56,8 +77,8 @@ if st.sidebar.button("Analyze"):
         
         # Fetch data
         with st.spinner("Fetching data..."):
-            df1 = stock1.get_historical_data(period=period)
-            df2 = stock2.get_historical_data(period=period)
+            df1 = stock1.get_historical_data(period=period, interval=interval)
+            df2 = stock2.get_historical_data(period=period, interval=interval)
         
         if df1.empty or df2.empty:
             st.error("No data available for one or both symbols")
